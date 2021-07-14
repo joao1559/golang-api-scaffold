@@ -1,0 +1,10 @@
+.git/
+.vscode/
+vendor/
+config/env.json
+env.json
+credentials.json
+cover.html
+cover.out
+fmtcoverage.html
+tio-patinhas-notificacao-api

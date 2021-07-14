@@ -1,0 +1,10 @@
+.git/
+.vscode/
+vendor/
+debug
+config/env.json
+env.json
+credentials.json
+cover.html
+cover.out
+fmtcoverage.html

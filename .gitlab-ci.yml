@@ -1,0 +1,85 @@
+image: golang:latest
+
+variables:
+  REPO_NAME: gitlab.luizalabs.com/luizalabs/tio-patinhas-notificacao-api
+  APP_NAME: tio-patinhas-notificacao-api
+
+before_script:
+  - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
+  - ln -svf $CI_PROJECT_DIR $GOPATH/src/$REPO_NAME
+  - cd $GOPATH/src/$REPO_NAME
+  - go get -t -d -v ./...
+
+stages:
+  - build
+  - test
+  - sonar
+  - deploy
+
+build:
+  stage: build
+  script:
+    - go build
+
+test:
+  stage: test
+  script:
+    - go test -coverprofile=cover.out -covermode=count ./...
+  artifacts:
+    expire_in: 20 min
+    paths:
+      - ./cover.out
+
+sonar:
+  stage: sonar
+  image: ciricihq/gitlab-sonar-scanner
+  variables:
+    SONAR_URL: https://sonarqube.luizalabs.com
+    SONAR_LOGIN: $SONAR_TOKEN
+  before_script: []
+  script:
+    - sonar-scanner -Dsonar.host.url="https://sonarqube.luizalabs.com" -Dsonar.login=$SONAR_TOKEN
+  dependencies:
+    - test
+
+.template: &teresa
+  script:
+    - echo 'Starting deploy of $APP_NAME in $CI_ENVIRONMENT_NAME ...'
+    - wget https://github.com/luizalabs/teresa/releases/download/v0.30.1/teresa-linux-amd64
+    - mv ./teresa-linux-amd64 teresa
+    - chmod +x ./teresa
+    - ./teresa version
+    - ./teresa config set-cluster $CI_ENVIRONMENT_NAME --server $CLUSTER_URL --tls
+    - echo $TERESA_PASSWORD | ./teresa login --user $TERESA_USER --cluster $CI_ENVIRONMENT_NAME
+    - ./teresa deploy create . --app $APP_NAME --description "Deploy GITLAB CI ${CI_COMMIT_REF_NAME}" --cluster $CI_ENVIRONMENT_NAME --no-input
+    - ./teresa app env-set --app $APP_NAME GIT_HASH=$(git rev-parse HEAD) VERSION=$(cat version.txt) --cluster $CI_ENVIRONMENT_NAME --no-input
+
+deploy_stage_master:
+  <<: *teresa
+  stage: deploy
+  environment:
+    name: stage
+  variables:
+    CLUSTER_URL: teresa-gcp-staging.magazineluiza.com.br
+  only:
+    - master
+
+deploy_stage_branches:
+  <<: *teresa
+  stage: deploy
+  environment:
+    name: stage
+  variables:
+    CLUSTER_URL: teresa-gcp-staging.magazineluiza.com.br
+  when: manual
+
+deploy_production:
+  <<: *teresa
+  stage: deploy
+  environment:
+    name: production
+  variables:
+    CLUSTER_URL: teresa-prod-multicanalidade-transaction.magazineluiza.com.br
+  only:
+    - tags
+  when: manual
