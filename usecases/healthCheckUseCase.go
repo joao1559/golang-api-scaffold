@@ -1,8 +1,8 @@
 package usecases
 
 import (
-	"gitlab.luizalabs.com/luizalabs/tio-patinhas-notificacao-api/interfaces"
-	"gitlab.luizalabs.com/luizalabs/tio-patinhas-notificacao-api/models"
+	"github.com/joao1559/golang-api-scaffold/interfaces"
+	"github.com/joao1559/golang-api-scaffold/models"
 )
 
 type healthcheckUseCase struct {

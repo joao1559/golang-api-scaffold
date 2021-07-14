@@ -1,85 +1,26 @@
 package db
 
 import (
-	"database/sql"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"context"
 	"log"
-	"os"
-	"strconv"
-	"time"
 
-	//factory
-	_ "github.com/go-sql-driver/mysql"
-)
-
-//Server ...
-type Server struct {
-	DBConn *sql.DB
-	Env    string
-}
-
-//factory
-var (
-	DBConn *sql.DB
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 //InitDb represent a factory of database
-func InitDb() {
-	a := Server{}
-	a.Env = os.Getenv("ENV")
-	connectionString := fmt.Sprintf("%s", a.GetDNS())
-	var err error
+func InitDb(ctx context.Context) (DBConn *mongo.Client, Collection *mongo.Collection) {
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017/")
 
-	DBConn, err = sql.Open("mysql", connectionString)
+	DBConn, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Printf("[db/init] - Erro ao tentar abrir conexão (%s). Erro: %s", a.Env, err.Error())
+		log.Fatal(err)
 	}
-	DBConn.SetConnMaxLifetime(time.Minute * 5)
-	DBConn.SetMaxIdleConns(0)
-	DBConn.SetMaxOpenConns(15)
-	DBConn.SetConnMaxLifetime(time.Hour)
-
+	err = DBConn.Ping(ctx, nil)
 	if err != nil {
-		log.Printf("[db/init] - Erro ao tentar abrir conexão (%s). Erro: %s", a.Env, err.Error())
-	}
-}
-
-//GetDNS representa a recuperação do acesso ao banco
-func (a *Server) GetDNS() string {
-	var (
-		dbUser     string
-		dbPassword string
-		dbname     string
-		dbHost     string
-		dbPort     int
-	)
-	file, err := ioutil.ReadFile("./config/env.json")
-	if err == nil {
-		jsonMap := make(map[string]interface{})
-		json.Unmarshal(file, &jsonMap)
-
-		env := os.Getenv("ENV")
-		if env == "" {
-			env = "development"
-		}
-
-		database := jsonMap[env].(map[string]interface{})
-
-		dbUser = fmt.Sprintf("%v", database["DBUSER"])
-		dbPassword = fmt.Sprintf("%v", database["DBPASSWORD"])
-		dbname = fmt.Sprintf("%v", database["DBNAME"])
-		dbHost = fmt.Sprintf("%v", database["DBHOST"])
-		dbPort, _ = strconv.Atoi(fmt.Sprintf("%v", database["DBPORT"]))
-	} else {
-		dbUser = os.Getenv("DBUSER")
-		dbPassword = os.Getenv("DBPASSWORD")
-		dbname = os.Getenv("DBNAME")
-		dbHost = os.Getenv("DBHOST")
-		dbPort, _ = strconv.Atoi(os.Getenv("DBPORT"))
+		log.Fatal(err)
 	}
 
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbUser, dbPassword, dbHost, dbPort, dbname)
-	return connectionString
+	Collection = DBConn.Database("scaffold").Collection("default")
+	return DBConn, Collection
 }

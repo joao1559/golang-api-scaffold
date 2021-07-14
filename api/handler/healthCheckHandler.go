@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"gitlab.luizalabs.com/luizalabs/tio-patinhas-notificacao-api/config"
-	"gitlab.luizalabs.com/luizalabs/tio-patinhas-notificacao-api/interfaces"
+	"github.com/joao1559/golang-api-scaffold/config"
+	"github.com/joao1559/golang-api-scaffold/interfaces"
 )
 
 //HTTPHealthCheckHandler represent the httphandler for article

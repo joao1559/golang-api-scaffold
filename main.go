@@ -1,9 +1,9 @@
 package main
 
 import (
-	"gitlab.luizalabs.com/luizalabs/tio-patinhas-notificacao-api/api"
 	"log"
 
+	"github.com/joao1559/golang-api-scaffold/api"
 )
 
 func main() {

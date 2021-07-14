@@ -1,17 +1,17 @@
 package api
 
 import (
+	"context"
 	"log"
 	"net/http"
-	"os"
 
-	"gitlab.luizalabs.com/luizalabs/tio-patinhas-notificacao-api/api/handler"
-	"gitlab.luizalabs.com/luizalabs/tio-patinhas-notificacao-api/repositories"
-	"gitlab.luizalabs.com/luizalabs/tio-patinhas-notificacao-api/usecases"
+	"github.com/joao1559/golang-api-scaffold/api/handler"
+	"github.com/joao1559/golang-api-scaffold/repositories"
+	"github.com/joao1559/golang-api-scaffold/usecases"
 
 	"github.com/gorilla/mux"
+	"github.com/joao1559/golang-api-scaffold/config/db"
 	"github.com/rs/cors"
-	"gitlab.luizalabs.com/luizalabs/tio-patinhas-notificacao-api/config/db"
 )
 
 //Server ...
@@ -19,14 +19,10 @@ type Server struct{}
 
 //StartServer inicia o servidor
 func (s *Server) StartServer() {
+	var ctx = context.TODO()
 	// Open connection
-	db.InitDb()
-	defer db.DBConn.Close()
-	err := db.DBConn.Ping()
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
+	DBConn, _ := db.InitDb(ctx)
+	defer DBConn.Disconnect(ctx)
 
 	cors := cors.New(cors.Options{
 		AllowedHeaders: []string{"X-Requested-With", "Content-Type", "Authorization"},
@@ -36,14 +32,11 @@ func (s *Server) StartServer() {
 
 	var routing = mux.NewRouter()
 
-	notificationRepository := repositories.NewMySQLNotification(db.DBConn)
-	notificationUseCase := usecases.NewNotificationUseCase(notificationRepository)
-	healthCheckRepository := repositories.NewMysqlHealthCheckRepository(db.DBConn)
+	healthCheckRepository := repositories.NewMysqlHealthCheckRepository(DBConn, ctx)
 	healthCheckUseCase := usecases.NewHealthCheckUseCase(healthCheckRepository)
 
-	handler.NewNotificationHTTPHandler(routing, notificationUseCase)
 	handler.NewHealthCheckHTTPHandler(routing, healthCheckUseCase)
 
-	log.Printf("Listening on port %s...", os.Getenv("PORT"))
-	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), cors.Handler(routing)))
+	log.Printf("Listening on port %s...", "4444")
+	log.Fatal(http.ListenAndServe(":"+"4444", cors.Handler(routing)))
 }
