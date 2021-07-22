@@ -21,7 +21,7 @@ type Server struct{}
 func (s *Server) StartServer() {
 	var ctx = context.TODO()
 	// Open connection
-	DBConn, _ := db.InitDb(ctx)
+	DBConn := db.InitDb(ctx)
 	defer DBConn.Disconnect(ctx)
 
 	cors := cors.New(cors.Options{
@@ -35,7 +35,11 @@ func (s *Server) StartServer() {
 	healthCheckRepository := repositories.NewMysqlHealthCheckRepository(DBConn, ctx)
 	healthCheckUseCase := usecases.NewHealthCheckUseCase(healthCheckRepository)
 
+	noteRepository := repositories.NewMongoNoteRepository(DBConn, ctx)
+	noteUseCase := usecases.NewNoteUseCase(noteRepository)
+
 	handler.NewHealthCheckHTTPHandler(routing, healthCheckUseCase)
+	handler.NewNoteHTTPHandler(routing, noteUseCase)
 
 	log.Printf("Listening on port %s...", "4444")
 	log.Fatal(http.ListenAndServe(":"+"4444", cors.Handler(routing)))

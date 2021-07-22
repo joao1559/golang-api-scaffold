@@ -9,7 +9,7 @@ import (
 )
 
 //InitDb represent a factory of database
-func InitDb(ctx context.Context) (DBConn *mongo.Client, Collection *mongo.Collection) {
+func InitDb(ctx context.Context) (DBConn *mongo.Client) {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017/")
 
 	DBConn, err := mongo.Connect(ctx, clientOptions)
@@ -21,6 +21,5 @@ func InitDb(ctx context.Context) (DBConn *mongo.Client, Collection *mongo.Collec
 		log.Fatal(err)
 	}
 
-	Collection = DBConn.Database("scaffold").Collection("default")
-	return DBConn, Collection
+	return DBConn
 }
