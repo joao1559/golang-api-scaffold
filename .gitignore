@@ -3,4 +3,4 @@
 vendor/
 config/env.json
 env.json
-tio-patinhas-notificacao-api
+golang-api-scaffold
