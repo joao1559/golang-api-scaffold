@@ -4,3 +4,6 @@ vendor/
 config/env.json
 env.json
 golang-api-scaffold
+cover.html
+cover.out
+fmtcoverage.html

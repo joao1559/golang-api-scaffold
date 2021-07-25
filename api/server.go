@@ -1,9 +1,9 @@
 package api
 
 import (
-	"context"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/joao1559/golang-api-scaffold/api/handler"
 	"github.com/joao1559/golang-api-scaffold/repositories"
@@ -19,10 +19,14 @@ type Server struct{}
 
 //StartServer inicia o servidor
 func (s *Server) StartServer() {
-	var ctx = context.TODO()
 	// Open connection
-	DBConn := db.InitDb(ctx)
-	defer DBConn.Disconnect(ctx)
+	db.InitDb()
+	defer db.DBConn.Close()
+	err := db.DBConn.Ping()
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
 
 	cors := cors.New(cors.Options{
 		AllowedHeaders: []string{"X-Requested-With", "Content-Type", "Authorization"},
@@ -32,14 +36,10 @@ func (s *Server) StartServer() {
 
 	var routing = mux.NewRouter()
 
-	healthCheckRepository := repositories.NewMysqlHealthCheckRepository(DBConn, ctx)
+	healthCheckRepository := repositories.NewMysqlHealthCheckRepository(db.DBConn)
 	healthCheckUseCase := usecases.NewHealthCheckUseCase(healthCheckRepository)
 
-	noteRepository := repositories.NewMongoNoteRepository(DBConn, ctx)
-	noteUseCase := usecases.NewNoteUseCase(noteRepository)
-
 	handler.NewHealthCheckHTTPHandler(routing, healthCheckUseCase)
-	handler.NewNoteHTTPHandler(routing, noteUseCase)
 
 	log.Printf("Listening on port %s...", "4444")
 	log.Fatal(http.ListenAndServe(":"+"4444", cors.Handler(routing)))

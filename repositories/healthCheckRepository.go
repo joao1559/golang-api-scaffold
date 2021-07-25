@@ -1,27 +1,25 @@
 package repositories
 
 import (
-	"context"
+	"database/sql"
 
 	"github.com/joao1559/golang-api-scaffold/interfaces"
 	"github.com/joao1559/golang-api-scaffold/models"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type mysqlHealthCheckRepository struct {
-	Conn *mongo.Client
-	Ctx  context.Context
+	Conn *sql.DB
 }
 
-// NewMysqlHealthCheckRepository ...
-func NewMysqlHealthCheckRepository(Conn *mongo.Client, Ctx context.Context) interfaces.HealthCheckRepository {
-	return &mysqlHealthCheckRepository{Conn, Ctx}
+// NewMysqlHealthCheckRepository will create an object that represent the article.Repository interface
+func NewMysqlHealthCheckRepository(Conn *sql.DB) interfaces.HealthCheckRepository {
+	return &mysqlHealthCheckRepository{Conn}
 }
 
 func (m *mysqlHealthCheckRepository) Check() (*models.HealthCheck, error) {
 	a := &models.HealthCheck{}
 	dbUp := "up"
-	err := m.Conn.Ping(m.Ctx, nil)
+	err := m.Conn.Ping()
 	if err != nil {
 		dbUp = "down"
 	}
